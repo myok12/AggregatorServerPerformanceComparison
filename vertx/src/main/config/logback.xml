@@ -1,0 +1,34 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="com.arpnetworking.logback.KeyValueEncoder">
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>[%date{yyyy-MM-dd'T'HH:mm:ss.SZ}][%level][%thread] %msg%n</pattern>
+            </layout>
+        </encoder>
+    </appender>
+
+    <logger name="io.vertx.ext.web" level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <logger name="io.vertx.core.http.impl" level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <logger name="io.vertx" level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <logger name="com.hazelcast" level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <logger name="io.netty.util.internal.PlatformDependent" level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="com.groupon" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <root>
+        <level value="INFO"/>
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
