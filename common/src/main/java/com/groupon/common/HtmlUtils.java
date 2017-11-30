@@ -1,9 +1,9 @@
-package com.groupon;
+package com.groupon.common;
 
-import static com.groupon.Constants.*;
+import static com.groupon.common.Constants.*;
 
-class HtmlUtils {
-    static String buildCalculateForm(String[] methods) {
+public class HtmlUtils {
+    public static String buildCalculateForm(String[] methods) {
         StringBuilder sb = new StringBuilder();
         sb.append("<h1>Crazy calculator</h1>");
         sb.append("<form action=\"" + CALC_ROUTE + "\" method=\"get\">");

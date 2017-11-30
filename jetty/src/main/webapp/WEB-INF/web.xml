@@ -11,6 +11,7 @@
   <servlet>
     <servlet-name>Calc</servlet-name>
     <servlet-class>com.groupon.CalcServlet</servlet-class>
+    <async-supported>true</async-supported>
   </servlet>
   <servlet-mapping>
     <servlet-name>Calc</servlet-name>

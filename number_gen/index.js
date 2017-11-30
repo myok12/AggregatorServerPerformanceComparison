@@ -11,7 +11,7 @@ app.get('/sum', (req, res) => {
   for (let i=0; i<nums.length; i++) {
     sum += parseInt(nums[i], 10);
   }
-  //console.log("Replying " + sum);
+  console.log("Replying " + sum);
   const respond = () => res.send("" + sum);
   if (isNaN(delay)) {
     respond();

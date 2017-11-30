@@ -1,8 +1,8 @@
-package com.groupon.expression_tree;
+package com.groupon.common.expression_tree;
 
-import com.groupon.expression_tree.ExpressionTree.Tree;
+import com.groupon.common.expression_tree.ExpressionTree.Tree;
 
-import static com.groupon.expression_tree.ExpressionTree.*;
+import static com.groupon.common.expression_tree.ExpressionTree.*;
 
 public class ExpressionTreeParser {
     /**

@@ -1,4 +1,4 @@
-package com.groupon.expression_tree;
+package com.groupon.common.expression_tree;
 
 import java.util.ArrayList;
 import java.util.List;

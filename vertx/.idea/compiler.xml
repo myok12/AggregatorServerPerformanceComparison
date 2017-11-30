@@ -6,12 +6,15 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="common" />
         <module name="load-test-jetty" />
         <module name="load-test-vertx" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="load-test-jetty" target="1.5" />
+      <module name="common" target="1.8" />
+      <module name="jcommon" target="1.8" />
+      <module name="load-test-jetty" target="1.8" />
       <module name="load-test-vertx" target="1.8" />
     </bytecodeTargetLevel>
   </component>

@@ -5,6 +5,8 @@
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/../jetty/pom.xml" />
+        <option value="$PROJECT_DIR$/../jCommon/pom.xml" />
+        <option value="$PROJECT_DIR$/../common/pom.xml" />
       </list>
     </option>
   </component>

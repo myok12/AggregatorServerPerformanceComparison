@@ -1,6 +1,6 @@
-package com.groupon.expression_tree;
+package com.groupon.common.expression_tree;
 
-import com.groupon.expression_tree.ExpressionTree.Atom;
+import com.groupon.common.expression_tree.ExpressionTree.Atom;
 import rx.Single;
 
 import java.util.Arrays;
@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.groupon.expression_tree.ExpressionTree.Node;
-import static com.groupon.expression_tree.ExpressionTree.Tree;
+import static com.groupon.common.expression_tree.ExpressionTree.Node;
+import static com.groupon.common.expression_tree.ExpressionTree.Tree;
 
 public class ExpressionTreeSummarizer {
     private Function<List<Integer>, Single<Integer>> summarizer;
