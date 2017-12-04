@@ -14,11 +14,21 @@ public class Utils {
         return sum;
     }
 
+    private static int currRequestIndex = 0;
+
+    private static int getServerIndex() {
+        // Round robin
+        int idx = currRequestIndex % SUM_SERVER_HOSTS.length;
+        currRequestIndex++;
+        return idx;
+    }
+
     public static String urlForCalc(List<Integer> numbers) {
-        //.get(new RequestOptions().setHost(SUM_SERVER_HOST).setPort(SUM_SERVER_PORT)
+        int serverIdx = getServerIndex();
         String numsAsString = numbers.stream().map(String::valueOf)
                 .collect(Collectors.joining(","));
-        return "http://" + SUM_SERVER_HOST + ":" + SUM_SERVER_PORT + SUM_SERVER_URI + "?" +
+        return "http://" + SUM_SERVER_HOSTS[serverIdx] + ":" + SUM_SERVER_PORTS[serverIdx] +
+                SUM_SERVER_URI + "?" +
                 SUM_SERVER_DELAY_PARAM + "=100" +
                 "&" + SUM_SERVER_NUMS_PARAM + "=" + numsAsString;
     }

@@ -5,10 +5,12 @@ import com.groupon.common.Utils;
 import com.groupon.common.expression_tree.ExpressionTree.Tree;
 import com.groupon.common.expression_tree.ExpressionTreeSummarizer;
 import io.vertx.core.Future;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpVersion;
 import io.vertx.rxjava.core.AbstractVerticle;
+import io.vertx.rxjava.core.http.HttpClient;
 import io.vertx.rxjava.core.http.HttpClientRequest;
+import io.vertx.rxjava.core.http.HttpClientResponse;
 import io.vertx.rxjava.ext.web.Router;
 import rx.Single;
 
@@ -20,21 +22,23 @@ import static com.groupon.common.HtmlUtils.buildCalculateForm;
 import static com.groupon.common.expression_tree.ExpressionTreeParser.parseExpressionTree;
 
 public class MainVerticle extends AbstractVerticle {
-    private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
+    // private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
+    private HttpClient httpClient;
 
     // TODO: Finish supporting delay
     private Single<Integer> sumOverNetwork(List<Integer> values) {
-        if (values.size() == 0) return Single.error(new Exception("Cannot sum 0 numbers"));
-        if (values.size() == 1) return Single.just(values.get(0));
+        // if (values.size() == 0) return Single.error(new Exception("Cannot sum 0 numbers"));
+        // if (values.size() == 1) return Single.just(values.get(0));
         return Single.fromEmitter(emitter -> {
-            HttpClientRequest request = vertx.createHttpClient().getAbs(Utils.urlForCalc(values));
+            HttpClientRequest request = httpClient.getAbs(Utils.urlForCalc(values));
 
-            request.toObservable().toSingle()
-                    .flatMap(response -> response.toObservable().toSingle())
+            request.toObservable()
+                    .flatMap(HttpClientResponse::toObservable)
                     .map(buffer -> buffer.toString("UTF-8"))
+                    .reduce((s, s2) -> s + s2)
                     .subscribe(body -> {
                         int sum = Integer.valueOf(body);
-                        logger.debug("Received from network: " + sum);
+                        // logger.debug("Received from network: " + sum);
                         emitter.onSuccess(sum);
                     }, emitter::onError);
             request.end();
@@ -43,6 +47,19 @@ public class MainVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> fut) {
+        httpClient = vertx.createHttpClient(
+                new HttpClientOptions()
+                        .setKeepAlive(true)
+                        .setMaxPoolSize(64) // 5 default // this is per host
+                        .setLogActivity(false)
+                        .setMaxWaitQueueSize(-1) // -1 default
+                        .setPipelining(true)
+                        .setPipeliningLimit(100)
+                        .setProtocolVersion(HttpVersion.HTTP_1_1) // 1.1 default
+                        .setConnectTimeout(10000)
+                        .setIdleTimeout(0)
+                        .setTcpNoDelay(true) // Same as in jetty.
+                        .setTryUseCompression(false));
         Method[] methods = new Method[]{
                 Method.fromMemory(),
                 new Method(Method.METHOD_NAME_NETWORK, this::sumOverNetwork),
@@ -65,7 +82,10 @@ public class MainVerticle extends AbstractVerticle {
                 Tree tree = parseExpressionTree(exp);
                 Single<Integer> sum = new ExpressionTreeSummarizer(method.getMapper()).sum(tree);
                 sum.subscribe(
-                        integer -> event.response().end(exp + "=" + integer),
+                        integer -> event.response()
+                                .putHeader("content-type", "text/html;charset=utf-8")
+                                .putHeader("Server", "Vertx(xxxxxxxxxxxxxxx)")
+                                .end(exp + "=" + integer),
                         throwable -> event.response().setStatusCode(500).end(throwable.getMessage()));
             } catch (Throwable throwable) {
                 event.response().setStatusCode(500).end(throwable.getMessage());
@@ -75,7 +95,7 @@ public class MainVerticle extends AbstractVerticle {
         vertx
                 .createHttpServer()
                 .requestHandler(router::accept)
-                .listen(8080, result -> {
+                .listen(8081, result -> {
                     if (result.succeeded()) {
                         fut.complete();
                     } else {
