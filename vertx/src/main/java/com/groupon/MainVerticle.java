@@ -31,6 +31,9 @@ public class MainVerticle extends AbstractVerticle {
         // if (values.size() == 1) return Single.just(values.get(0));
         return Single.fromEmitter(emitter -> {
             HttpClientRequest request = httpClient.getAbs(Utils.urlForCalc(values));
+            request.putHeader("User-Agent", "Vertx");
+            request.putHeader("Accept-Encoding", "gzip");
+            request.setTimeout(1_000_000);
 
             request.toObservable()
                     .flatMap(HttpClientResponse::toObservable)
@@ -49,15 +52,16 @@ public class MainVerticle extends AbstractVerticle {
     public void start(Future<Void> fut) {
         httpClient = vertx.createHttpClient(
                 new HttpClientOptions()
-                        .setKeepAlive(true)
+                        .setKeepAlive(false)
                         .setMaxPoolSize(64) // 5 default // this is per host
                         .setLogActivity(false)
                         .setMaxWaitQueueSize(-1) // -1 default
-                        .setPipelining(true)
-                        .setPipeliningLimit(100)
-                        .setProtocolVersion(HttpVersion.HTTP_1_1) // 1.1 default
-                        .setConnectTimeout(10000)
-                        .setIdleTimeout(0)
+                        //.setPipelining(true)
+                        //.setPipeliningLimit(100)
+                        .setProtocolVersion(HttpVersion.HTTP_1_0) // 1.1 default
+                        .setConnectTimeout(1_000_000)
+                        .setIdleTimeout(1_000) // For some reasons now connections are established
+                        // with 0.
                         .setTcpNoDelay(true) // Same as in jetty.
                         .setTryUseCompression(false));
         Method[] methods = new Method[]{

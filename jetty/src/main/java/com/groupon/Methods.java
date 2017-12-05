@@ -3,7 +3,6 @@ package com.groupon;
 import com.groupon.common.Method;
 import com.groupon.common.Utils;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.http.HttpVersion;
@@ -15,22 +14,15 @@ import java.util.concurrent.TimeUnit;
 class Methods {
 
     private static HttpClient httpClient = new HttpClient();
-    static {
-        try {
-            httpClient.setMaxRequestsQueuedPerDestination(100_000_000); //1024 default
-            httpClient.setMaxConnectionsPerDestination(64); //64 default
-            httpClient.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
     static Method[] methods = new Method[]{
             Method.fromMemory(),
             new Method(Method.METHOD_NAME_NETWORK, integers ->
                     Single.fromEmitter(emitter ->
                             httpClient.newRequest(Utils.urlForCalc(integers))
-                                    .version(HttpVersion.HTTP_1_1)
-                                    .timeout(10, TimeUnit.SECONDS)
+                                    .agent("Jetty")
+                                    .idleTimeout(1_000, TimeUnit.SECONDS)
+                                    .version(HttpVersion.HTTP_1_0)
+                                    .timeout(1_000, TimeUnit.SECONDS)
                                     .send(new BufferingResponseListener() {
                                         @Override
                                         public void onComplete(Result result) {
@@ -49,5 +41,17 @@ class Methods {
                                         }
                                     })))
     };
+
+    static {
+        try {
+            httpClient.setMaxRequestsQueuedPerDestination(100_000_000); //1024 default
+            httpClient.setMaxConnectionsPerDestination(64); //64 default
+            httpClient.setConnectTimeout(1_000_000); // in ms
+
+            httpClient.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }
