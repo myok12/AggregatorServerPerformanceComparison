@@ -10,6 +10,7 @@ import static com.groupon.common.Utils.sum;
 public class Method {
     private static final String METHOD_NAME_MEMORY = "Memory";
     public static final String METHOD_NAME_NETWORK = "Network";
+    public static final String METHOD_EVENTBUS_NETWORK = "EventbusNetwork";
 
     private final String name;
     private final Function<List<Integer>, Single<Integer>> mapper;

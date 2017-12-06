@@ -1,25 +1,33 @@
 package com.groupon;
 
-import com.groupon.common.Method;
-import com.groupon.common.Utils;
-import com.groupon.common.expression_tree.ExpressionTree.Tree;
-import com.groupon.common.expression_tree.ExpressionTreeSummarizer;
+import static com.groupon.common.Constants.CALC_ROUTE;
+import static com.groupon.common.Constants.EXPRESSION_PARAM;
+import static com.groupon.common.Constants.FORM_ROUTE;
+import static com.groupon.common.Constants.METHOD_PARAM;
+import static com.groupon.common.HtmlUtils.buildCalculateForm;
+import static com.groupon.common.expression_tree.ExpressionTreeParser.parseExpressionTree;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import io.vertx.core.Future;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.rxjava.core.AbstractVerticle;
+import io.vertx.rxjava.core.RxHelper;
+import io.vertx.rxjava.core.eventbus.Message;
 import io.vertx.rxjava.core.http.HttpClient;
 import io.vertx.rxjava.core.http.HttpClientRequest;
 import io.vertx.rxjava.core.http.HttpClientResponse;
 import io.vertx.rxjava.ext.web.Router;
 import rx.Single;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static com.groupon.common.Constants.*;
-import static com.groupon.common.HtmlUtils.buildCalculateForm;
-import static com.groupon.common.expression_tree.ExpressionTreeParser.parseExpressionTree;
+import com.groupon.common.Method;
+import com.groupon.common.Utils;
+import com.groupon.common.expression_tree.ExpressionTree.Tree;
+import com.groupon.common.expression_tree.ExpressionTreeSummarizer;
 
 public class MainVerticle extends AbstractVerticle {
     // private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
@@ -50,6 +58,7 @@ public class MainVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> fut) {
+        vertx.eventBus().getDelegate().registerDefaultCodec(Collection.class, new CollectionMessageCodec<>());
         httpClient = vertx.createHttpClient(
                 new HttpClientOptions()
                         .setKeepAlive(false)
@@ -64,9 +73,15 @@ public class MainVerticle extends AbstractVerticle {
                         // with 0.
                         .setTcpNoDelay(true) // Same as in jetty.
                         .setTryUseCompression(false));
+        SumVerticle sumVerticle = new SumVerticle(httpClient);
+        RxHelper.deployVerticle(vertx, sumVerticle);
         Method[] methods = new Method[]{
                 Method.fromMemory(),
                 new Method(Method.METHOD_NAME_NETWORK, this::sumOverNetwork),
+                new Method(Method.METHOD_EVENTBUS_NETWORK, integers -> {
+                    Single<Message<Integer>> messageSingle = vertx.eventBus().rxSend(Method.METHOD_EVENTBUS_NETWORK, integers, new DeliveryOptions().setCodecName(CollectionMessageCodec.NAME));
+                    return messageSingle.flatMap(event -> Single.just(event.body()));
+                })
         };
 
         Router router = Router.router(vertx);
