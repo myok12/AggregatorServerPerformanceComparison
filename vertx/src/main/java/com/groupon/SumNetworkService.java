@@ -4,7 +4,6 @@ import java.util.List;
 
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpVersion;
-import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
 import io.vertx.rxjava.core.eventbus.Message;
 import io.vertx.rxjava.core.http.HttpClient;
@@ -15,11 +14,11 @@ import rx.Observable;
 import com.groupon.common.Method;
 import com.groupon.common.Utils;
 
-public class SumVerticle extends AbstractVerticle {
+public class SumNetworkService {
 
     private HttpClient httpClient;
 
-    public SumVerticle(Vertx vertx) {
+    public SumNetworkService(Vertx vertx) {
         httpClient = vertx.createHttpClient(
                 new HttpClientOptions()
                         .setKeepAlive(false)
@@ -34,10 +33,6 @@ public class SumVerticle extends AbstractVerticle {
                         // with 0.
                         .setTcpNoDelay(true) // Same as in jetty.
                         .setTryUseCompression(false));
-    }
-
-    @Override
-    public void start() throws Exception {
         Observable<Message<List<Integer>>> sumMemory = vertx.eventBus().<List<Integer>>localConsumer(Method.METHOD_EVENTBUS_NETWORK).toObservable();
         sumMemory.subscribe(message -> callSumNetwork(message.body())
                 .subscribe(body -> {

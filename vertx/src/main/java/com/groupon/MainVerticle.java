@@ -14,7 +14,6 @@ import java.util.List;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.core.RxHelper;
 import io.vertx.rxjava.core.eventbus.Message;
 import io.vertx.rxjava.ext.web.Router;
 import rx.Single;
@@ -25,13 +24,13 @@ import com.groupon.common.expression_tree.ExpressionTreeSummarizer;
 
 public class MainVerticle extends AbstractVerticle {
     // private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
-    private SumVerticle sumVerticle;
+    private SumNetworkService sumNetworkService;
 
     // TODO: Finish supporting delay
     private Single<Integer> sumOverNetwork(List<Integer> values) {
         // if (values.size() == 0) return Single.error(new Exception("Cannot sum 0 numbers"));
         // if (values.size() == 1) return Single.just(values.get(0));
-        return Single.fromEmitter(emitter -> sumVerticle.callSumNetwork(values)
+        return Single.fromEmitter(emitter -> sumNetworkService.callSumNetwork(values)
                 .subscribe(body -> {
                     int sum = Integer.valueOf(body);
                     // logger.debug("Received from network: " + sum);
@@ -42,14 +41,13 @@ public class MainVerticle extends AbstractVerticle {
     @Override
     public void start(Future<Void> fut) {
         vertx.eventBus().getDelegate().registerDefaultCodec(Collection.class, new CollectionMessageCodec<>());
-        sumVerticle = new SumVerticle(vertx);
-        RxHelper.deployVerticle(vertx, sumVerticle);
+        sumNetworkService = new SumNetworkService(vertx);
         Method[] methods = new Method[]{
                 Method.fromMemory(),
                 new Method(Method.METHOD_NAME_NETWORK, this::sumOverNetwork),
                 new Method(Method.METHOD_EVENTBUS_NETWORK, integers -> {
                     Single<Message<Integer>> messageSingle = vertx.eventBus().rxSend(Method.METHOD_EVENTBUS_NETWORK, integers, new DeliveryOptions().setCodecName(CollectionMessageCodec.NAME));
-                    return messageSingle.flatMap(event -> Single.just(event.body()));
+                    return messageSingle.map(Message::body);
                 })
         };
 
