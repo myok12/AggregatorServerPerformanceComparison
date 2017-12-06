@@ -13,67 +13,36 @@ import java.util.List;
 
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpVersion;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.RxHelper;
 import io.vertx.rxjava.core.eventbus.Message;
-import io.vertx.rxjava.core.http.HttpClient;
-import io.vertx.rxjava.core.http.HttpClientRequest;
-import io.vertx.rxjava.core.http.HttpClientResponse;
 import io.vertx.rxjava.ext.web.Router;
 import rx.Single;
 
 import com.groupon.common.Method;
-import com.groupon.common.Utils;
 import com.groupon.common.expression_tree.ExpressionTree.Tree;
 import com.groupon.common.expression_tree.ExpressionTreeSummarizer;
 
 public class MainVerticle extends AbstractVerticle {
     // private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
-    private HttpClient httpClient;
+    private SumVerticle sumVerticle;
 
     // TODO: Finish supporting delay
     private Single<Integer> sumOverNetwork(List<Integer> values) {
         // if (values.size() == 0) return Single.error(new Exception("Cannot sum 0 numbers"));
         // if (values.size() == 1) return Single.just(values.get(0));
-        return Single.fromEmitter(emitter -> {
-            HttpClientRequest request = httpClient.getAbs(Utils.urlForCalc(values));
-            request.putHeader("User-Agent", "Vertx");
-            request.putHeader("Accept-Encoding", "gzip");
-            request.setTimeout(1_000_000);
-
-            request.toObservable()
-                    .flatMap(HttpClientResponse::toObservable)
-                    .map(buffer -> buffer.toString("UTF-8"))
-                    .reduce((s, s2) -> s + s2)
-                    .subscribe(body -> {
-                        int sum = Integer.valueOf(body);
-                        // logger.debug("Received from network: " + sum);
-                        emitter.onSuccess(sum);
-                    }, emitter::onError);
-            request.end();
-        });
+        return Single.fromEmitter(emitter -> sumVerticle.callSumNetwork(values)
+                .subscribe(body -> {
+                    int sum = Integer.valueOf(body);
+                    // logger.debug("Received from network: " + sum);
+                    emitter.onSuccess(sum);
+                }, emitter::onError));
     }
 
     @Override
     public void start(Future<Void> fut) {
         vertx.eventBus().getDelegate().registerDefaultCodec(Collection.class, new CollectionMessageCodec<>());
-        httpClient = vertx.createHttpClient(
-                new HttpClientOptions()
-                        .setKeepAlive(false)
-                        .setMaxPoolSize(64) // 5 default // this is per host
-                        .setLogActivity(false)
-                        .setMaxWaitQueueSize(-1) // -1 default
-                        //.setPipelining(true)
-                        //.setPipeliningLimit(100)
-                        .setProtocolVersion(HttpVersion.HTTP_1_0) // 1.1 default
-                        .setConnectTimeout(1_000_000)
-                        .setIdleTimeout(1_000) // For some reasons now connections are established
-                        // with 0.
-                        .setTcpNoDelay(true) // Same as in jetty.
-                        .setTryUseCompression(false));
-        SumVerticle sumVerticle = new SumVerticle(httpClient);
+        sumVerticle = new SumVerticle(vertx);
         RxHelper.deployVerticle(vertx, sumVerticle);
         Method[] methods = new Method[]{
                 Method.fromMemory(),
