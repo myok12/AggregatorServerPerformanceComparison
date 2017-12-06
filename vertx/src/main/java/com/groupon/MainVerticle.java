@@ -8,7 +8,6 @@ import static com.groupon.common.HtmlUtils.buildCalculateForm;
 import static com.groupon.common.expression_tree.ExpressionTreeParser.parseExpressionTree;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import io.vertx.core.Future;
@@ -26,25 +25,14 @@ public class MainVerticle extends AbstractVerticle {
     // private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
     private SumNetworkService sumNetworkService;
 
-    // TODO: Finish supporting delay
-    private Single<Integer> sumOverNetwork(List<Integer> values) {
-        // if (values.size() == 0) return Single.error(new Exception("Cannot sum 0 numbers"));
-        // if (values.size() == 1) return Single.just(values.get(0));
-        return Single.fromEmitter(emitter -> sumNetworkService.callSumNetwork(values)
-                .subscribe(body -> {
-                    int sum = Integer.valueOf(body);
-                    // logger.debug("Received from network: " + sum);
-                    emitter.onSuccess(sum);
-                }, emitter::onError));
-    }
+
 
     @Override
     public void start(Future<Void> fut) {
-        vertx.eventBus().getDelegate().registerDefaultCodec(Collection.class, new CollectionMessageCodec<>());
         sumNetworkService = new SumNetworkService(vertx);
         Method[] methods = new Method[]{
                 Method.fromMemory(),
-                new Method(Method.METHOD_NAME_NETWORK, this::sumOverNetwork),
+                new Method(Method.METHOD_NAME_NETWORK, sumNetworkService::sumOverNetwork),
                 new Method(Method.METHOD_EVENTBUS_NETWORK, integers -> {
                     Single<Message<Integer>> messageSingle = vertx.eventBus().rxSend(Method.METHOD_EVENTBUS_NETWORK, integers, new DeliveryOptions().setCodecName(CollectionMessageCodec.NAME));
                     return messageSingle.map(Message::body);
