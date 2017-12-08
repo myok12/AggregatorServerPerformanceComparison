@@ -1,11 +1,12 @@
 const cluster = require('cluster');
+const http = require('http');
 const numCPUs = require('os').cpus().length;
 
 const C100_OUTPUT = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
 const C1000_OUTPUT = C100_OUTPUT + C100_OUTPUT + C100_OUTPUT + C100_OUTPUT + C100_OUTPUT + C100_OUTPUT + C100_OUTPUT + C100_OUTPUT + C100_OUTPUT + C100_OUTPUT;
 const C10000_OUTPUT = C1000_OUTPUT + C1000_OUTPUT + C1000_OUTPUT + C1000_OUTPUT + C1000_OUTPUT + C1000_OUTPUT + C1000_OUTPUT + C1000_OUTPUT + C1000_OUTPUT + C1000_OUTPUT;
 
-const padResponse = false;
+const PAD_RESPONSE = false;
 
 const forkSlaves = function() {
 	if (cluster.isMaster) {
@@ -41,7 +42,7 @@ const createServer = function() {
 		// We don't really care about the value being returned, so saving CPU time.
 		const result = req.query.nums.length;
 
-        // const nums = (req.query.nums || "0");
+    // const nums = (req.query.nums || "0");
 		// var sum = 0;
 		// for (var i=0; i<nums.length; i++) {
 		//   sum += parseInt(nums[i], 10);
@@ -49,7 +50,7 @@ const createServer = function() {
 		// console.log("Replying " + sum);
 
 		const respond = function() {
-			return res.send("" + result + padResponse ? "\n" + C10000_OUTPUT : "");
+			return res.send("" + result + (PAD_RESPONSE ? "\n" + C10000_OUTPUT : ""));
 		};
 
 		if (isNaN(delay)) {
@@ -61,7 +62,10 @@ const createServer = function() {
 
 	const port = process.env.PORT || 3000;
 
-	app.listen(port, function() {
+  const server = http.createServer(app);
+  server.setTimeout(10*60*1000); // 10 minutes
+
+	server.listen(port, function() {
 		console.log('Number generator app listening on port ' + port + '.');
 	});
 };

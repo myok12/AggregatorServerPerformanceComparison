@@ -11,6 +11,8 @@ import rx.Single;
 import javax.servlet.http.HttpServletResponse;
 import java.util.concurrent.TimeUnit;
 
+import static com.groupon.common.Utils.stripPaddingOptionallyFromResponse;
+
 class Methods {
 
     private static HttpClient httpClient = new HttpClient();
@@ -35,9 +37,7 @@ class Methods {
                                                         .getResponse().getStatus()));
                                                 return;
                                             }
-                                            String body = getContentAsString();
-                                            int num = Integer.valueOf(body);
-                                            emitter.onSuccess(num);
+                                            emitter.onSuccess(stripPaddingOptionallyFromResponse(getContentAsString()));
                                         }
                                     })))
     };

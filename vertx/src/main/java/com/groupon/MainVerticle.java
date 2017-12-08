@@ -19,6 +19,7 @@ import java.util.List;
 
 import static com.groupon.common.Constants.*;
 import static com.groupon.common.HtmlUtils.buildCalculateForm;
+import static com.groupon.common.Utils.stripPaddingOptionallyFromResponse;
 import static com.groupon.common.expression_tree.ExpressionTreeParser.parseExpressionTree;
 
 public class MainVerticle extends AbstractVerticle {
@@ -27,8 +28,6 @@ public class MainVerticle extends AbstractVerticle {
 
     // TODO: Finish supporting delay
     private Single<Integer> sumOverNetwork(List<Integer> values) {
-        // if (values.size() == 0) return Single.error(new Exception("Cannot sum 0 numbers"));
-        // if (values.size() == 1) return Single.just(values.get(0));
         return Single.fromEmitter(emitter -> {
             HttpClientRequest request = httpClient.getAbs(Utils.urlForCalc(values));
             request.putHeader("User-Agent", "Vertx");
@@ -40,9 +39,8 @@ public class MainVerticle extends AbstractVerticle {
                     .map(buffer -> buffer.toString("UTF-8"))
                     .reduce((s, s2) -> s + s2)
                     .subscribe(body -> {
-                        int sum = Integer.valueOf(body);
                         // logger.debug("Received from network: " + sum);
-                        emitter.onSuccess(sum);
+                        emitter.onSuccess(stripPaddingOptionallyFromResponse(body));
                     }, emitter::onError);
             request.end();
         });

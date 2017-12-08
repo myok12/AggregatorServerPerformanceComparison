@@ -32,4 +32,10 @@ public class Utils {
                 SUM_SERVER_DELAY_PARAM + "=100" +
                 "&" + SUM_SERVER_NUMS_PARAM + "=" + numsAsString;
     }
+
+    public static int stripPaddingOptionallyFromResponse(String body) {
+        int firstLine = body.indexOf('\n');
+        String resWithoutPad = firstLine == -1 ? body : body.substring(0, firstLine);
+        return Integer.valueOf(resWithoutPad);
+    }
 }

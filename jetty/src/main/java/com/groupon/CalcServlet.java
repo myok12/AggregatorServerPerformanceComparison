@@ -6,6 +6,8 @@ import com.groupon.common.expression_tree.ExpressionTreeSummarizer;
 import rx.Single;
 
 import javax.servlet.AsyncContext;
+import javax.servlet.annotation.WebInitParam;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,6 +19,9 @@ import static com.groupon.common.Constants.EXPRESSION_PARAM;
 import static com.groupon.common.Constants.METHOD_PARAM;
 import static com.groupon.common.expression_tree.ExpressionTreeParser.parseExpressionTree;
 
+@WebServlet(name = "Form", urlPatterns = {"/"}, asyncSupported = true, initParams = {
+        @WebInitParam(name = "", value = "")
+})
 public class CalcServlet extends HttpServlet {
     private static void respondWithError(HttpServletResponse response, AsyncContext asyncContext,
                                          Throwable throwable) {
@@ -42,6 +47,7 @@ public class CalcServlet extends HttpServlet {
         Single<Integer> sum = new ExpressionTreeSummarizer(method.getMapper()).sum(tree);
 
         AsyncContext asyncContext = request.startAsync();
+        asyncContext.setTimeout(1_000_000); // in ms
 
         sum.subscribe(
                 integer -> {
