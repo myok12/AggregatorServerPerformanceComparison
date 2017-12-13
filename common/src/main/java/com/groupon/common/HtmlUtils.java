@@ -19,8 +19,12 @@ public class HtmlUtils {
         sb.append("<input type=\"text\" name=\"" + EXPRESSION_PARAM + "\" value=\"1+2+3\" " +
                 "size=\"100\">");
         sb.append("<br/>");
-        sb.append("Delay: ");
+        sb.append("Padding: ");
         sb.append("<input type=\"number\" name=\"" + DELAY_PARAM + "\" value=\"100\" " +
+                "size=\"5\">");
+        sb.append("<br/>");
+        sb.append("Delay: ");
+        sb.append("<input type=\"number\" name=\"" + PADDING_PARAM + "\" value=\"100\" " +
                 "size=\"5\">");
         sb.append("<br/>");
         sb.append("<input type=\"submit\" value=\"Go calc\">");

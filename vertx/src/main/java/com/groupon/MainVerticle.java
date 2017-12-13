@@ -14,8 +14,12 @@ import io.vertx.rxjava.core.http.HttpClientResponse;
 import io.vertx.rxjava.ext.web.Router;
 import rx.Single;
 
+import java.util.function.Function;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.groupon.common.Constants.*;
 import static com.groupon.common.HtmlUtils.buildCalculateForm;
@@ -27,9 +31,10 @@ public class MainVerticle extends AbstractVerticle {
     private HttpClient httpClient;
 
     // TODO: Finish supporting delay
-    private Single<Integer> sumOverNetwork(List<Integer> values) {
-        return Single.fromEmitter(emitter -> {
-            HttpClientRequest request = httpClient.getAbs(Utils.urlForCalc(values));
+    private Function<List<Integer>, Single<Integer>> sumOverNetwork(Map<String, String>
+                                                                    parameters) {
+        return values -> Single.fromEmitter(emitter -> {
+            HttpClientRequest request = httpClient.getAbs(Utils.urlForCalc(values, parameters));
             request.putHeader("User-Agent", "Vertx");
             request.putHeader("Accept-Encoding", "gzip");
             request.setTimeout(1_000_000);
@@ -82,7 +87,12 @@ public class MainVerticle extends AbstractVerticle {
 
                 String exp = event.request().getParam(EXPRESSION_PARAM);
                 Tree tree = parseExpressionTree(exp);
-                Single<Integer> sum = new ExpressionTreeSummarizer(method.getMapper()).sum(tree);
+                Map<String, String> parameters = StreamSupport.stream(event.request().params()
+                                .getDelegate().spliterator(),
+                        false).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                Single<Integer> sum = new ExpressionTreeSummarizer(method.getMapper().apply
+                        (parameters))
+                        .sum(tree);
                 sum.subscribe(
                         integer -> event.response()
                                 .putHeader("content-type", "text/html;charset=utf-8")

@@ -18,9 +18,9 @@ class Methods {
     private static HttpClient httpClient = new HttpClient();
     static Method[] methods = new Method[]{
             Method.fromMemory(),
-            new Method(Method.METHOD_NAME_NETWORK, integers ->
+            new Method(Method.METHOD_NAME_NETWORK, parameters -> integers ->
                     Single.fromEmitter(emitter ->
-                            httpClient.newRequest(Utils.urlForCalc(integers))
+                            httpClient.newRequest(Utils.urlForCalc(integers, parameters))
                                     .agent("Jetty")
                                     .idleTimeout(1_000, TimeUnit.SECONDS)
                                     .version(HttpVersion.HTTP_1_0)

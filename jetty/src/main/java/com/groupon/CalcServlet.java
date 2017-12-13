@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.groupon.Methods.methods;
 import static com.groupon.common.Constants.EXPRESSION_PARAM;
@@ -44,7 +46,10 @@ public class CalcServlet extends HttpServlet {
 
         String exp = request.getParameter(EXPRESSION_PARAM);
         Tree tree = parseExpressionTree(exp);
-        Single<Integer> sum = new ExpressionTreeSummarizer(method.getMapper()).sum(tree);
+        Map<String, String> parameters = request.getParameterMap().entrySet().stream().collect
+                (Collectors.toMap(Map.Entry::getKey,
+                entry -> Arrays.stream(entry.getValue()).collect(Collectors.joining(","))));
+        Single<Integer> sum = new ExpressionTreeSummarizer(method.getMapper().apply(parameters)).sum(tree);
 
         AsyncContext asyncContext = request.startAsync();
         asyncContext.setTimeout(1_000_000); // in ms
