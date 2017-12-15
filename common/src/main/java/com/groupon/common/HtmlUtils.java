@@ -20,11 +20,11 @@ public class HtmlUtils {
                 "size=\"100\">");
         sb.append("<br/>");
         sb.append("Padding: ");
-        sb.append("<input type=\"number\" name=\"" + DELAY_PARAM + "\" value=\"100\" " +
+        sb.append("<input type=\"number\" name=\"" + PADDING_PARAM + "\" value=\"10000\" " +
                 "size=\"5\">");
         sb.append("<br/>");
         sb.append("Delay: ");
-        sb.append("<input type=\"number\" name=\"" + PADDING_PARAM + "\" value=\"100\" " +
+        sb.append("<input type=\"number\" name=\"" + DELAY_PARAM + "\" value=\"1000\" " +
                 "size=\"5\">");
         sb.append("<br/>");
         sb.append("<input type=\"submit\" value=\"Go calc\">");

@@ -14,6 +14,7 @@
         <logback-steno.version>1.17.0</logback-steno.version>
         <vertx.version>3.5.0</vertx.version>
         <vertx.verticle>com.groupon.MainVerticle</vertx.verticle>
+        <vertx.launcher>com.groupon.ApplicationLauncher</vertx.launcher>
     </properties>
 
     <dependencies>

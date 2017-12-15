@@ -1,75 +1,37 @@
 package com.groupon;
 
 import com.groupon.common.Method;
-import com.groupon.common.Utils;
-import com.groupon.common.expression_tree.ExpressionTree.Tree;
+import com.groupon.common.expression_tree.ExpressionTree;
 import com.groupon.common.expression_tree.ExpressionTreeSummarizer;
 import io.vertx.core.Future;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpVersion;
 import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.core.http.HttpClient;
-import io.vertx.rxjava.core.http.HttpClientRequest;
-import io.vertx.rxjava.core.http.HttpClientResponse;
 import io.vertx.rxjava.ext.web.Router;
 import rx.Single;
 
-import java.util.function.Function;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static com.groupon.common.Constants.*;
 import static com.groupon.common.HtmlUtils.buildCalculateForm;
-import static com.groupon.common.Utils.stripPaddingOptionallyFromResponse;
 import static com.groupon.common.expression_tree.ExpressionTreeParser.parseExpressionTree;
 
 public class MainVerticle extends AbstractVerticle {
-    // private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
-    private HttpClient httpClient;
-
-    // TODO: Finish supporting delay
-    private Function<List<Integer>, Single<Integer>> sumOverNetwork(Map<String, String>
-                                                                    parameters) {
-        return values -> Single.fromEmitter(emitter -> {
-            HttpClientRequest request = httpClient.getAbs(Utils.urlForCalc(values, parameters));
-            request.putHeader("User-Agent", "Vertx");
-            request.putHeader("Accept-Encoding", "gzip");
-            request.setTimeout(1_000_000);
-
-            request.toObservable()
-                    .flatMap(HttpClientResponse::toObservable)
-                    .map(buffer -> buffer.toString("UTF-8"))
-                    .reduce((s, s2) -> s + s2)
-                    .subscribe(body -> {
-                        // logger.debug("Received from network: " + sum);
-                        emitter.onSuccess(stripPaddingOptionallyFromResponse(body));
-                    }, emitter::onError);
-            request.end();
-        });
-    }
+    private EventBusHelper eventBusHelper;
 
     @Override
     public void start(Future<Void> fut) {
-        httpClient = vertx.createHttpClient(
-                new HttpClientOptions()
-                        .setKeepAlive(false)
-                        .setMaxPoolSize(64) // 5 default // this is per host
-                        .setLogActivity(false)
-                        .setMaxWaitQueueSize(-1) // -1 default
-                        //.setPipelining(true)
-                        //.setPipeliningLimit(100)
-                        .setProtocolVersion(HttpVersion.HTTP_1_0) // 1.1 default
-                        .setConnectTimeout(1_000_000)
-                        .setIdleTimeout(1_000) // For some reasons now connections are established
-                        // with 0.
-                        .setTcpNoDelay(true) // Same as in jetty.
-                        .setTryUseCompression(false));
+        SumOverNetwork sumOverNetwork = new SumOverNetwork(vertx);
+
+        eventBusHelper = new EventBusHelper(vertx, sumOverNetwork);
+        eventBusHelper.registerEventBusConsumer();
+
         Method[] methods = new Method[]{
                 Method.fromMemory(),
-                new Method(Method.METHOD_NAME_NETWORK, this::sumOverNetwork),
+                new Method(Method.METHOD_NAME_NETWORK, sumOverNetwork::sumOverNetwork),
+                new Method(Method.METHOD_EVENT_BUS_NETWORK, parameters ->
+                        integers -> eventBusHelper.sendEventBusMessage(parameters, integers))
         };
 
         Router router = Router.router(vertx);
@@ -86,7 +48,7 @@ public class MainVerticle extends AbstractVerticle {
                         new RuntimeException("Couldn't find method: " + methodName));
 
                 String exp = event.request().getParam(EXPRESSION_PARAM);
-                Tree tree = parseExpressionTree(exp);
+                ExpressionTree.Tree tree = parseExpressionTree(exp);
                 Map<String, String> parameters = StreamSupport.stream(event.request().params()
                                 .getDelegate().spliterator(),
                         false).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

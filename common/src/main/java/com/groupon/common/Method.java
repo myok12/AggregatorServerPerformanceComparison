@@ -9,8 +9,9 @@ import java.util.function.Function;
 import static com.groupon.common.Utils.sum;
 
 public class Method {
-    private static final String METHOD_NAME_MEMORY = "Memory";
-    public static final String METHOD_NAME_NETWORK = "Network";
+    private static final String METHOD_NAME_MEMORY       = "Memory";
+    public static final String  METHOD_NAME_NETWORK      = "Network";
+    public static final String  METHOD_EVENT_BUS_NETWORK = "EventBusNetwork";
 
     private final String name;
     // The Map is for the request params.
