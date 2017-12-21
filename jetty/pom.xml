@@ -11,6 +11,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jetty.version>9.4.7.v20170914</jetty.version>
+    <main.class>com.groupon.MainServlet</main.class>
   </properties>
  
   <dependencies>
@@ -39,6 +40,29 @@
  
   <build>
     <plugins>
+			<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<configuration>
+							<archive>
+									<manifest>
+											<mainClass>${main.class}</mainClass>
+									</manifest>
+							</archive>
+							<descriptorRefs>
+									<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+					</configuration>
+					<executions>
+							<execution>
+									<id>make-assembly</id> <!-- this is used for inheritance merges -->
+									<phase>package</phase> <!-- bind to the packaging phase -->
+									<goals>
+											<goal>single</goal>
+									</goals>
+							</execution>
+					</executions>
+			</plugin>
+
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
@@ -60,4 +84,39 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+		<profile>
+			<id>servlet</id>
+			<properties>
+        <main.class>com.groupon.MainServlet</main.class>
+			</properties>
+			<dependencies>
+					<dependency>
+							<groupId>org.eclipse.jetty</groupId>
+							<artifactId>jetty-servlet</artifactId>
+							<version>${jetty.version}</version>
+					</dependency>
+			</dependencies>
+			<build>
+					<plugins>
+							<plugin>
+									<inherited>true</inherited>
+									<groupId>org.apache.maven.plugins</groupId>
+									<artifactId>maven-compiler-plugin</artifactId>
+									<version>2.3.2</version>
+									<configuration>
+											<excludes>
+													<exclude>hello/handler/**</exclude>
+											</excludes>
+											<source>1.8</source>
+											<target>1.8</target>
+											<optimize>true</optimize>
+											<debug>false</debug>
+									</configuration>
+							</plugin>
+					</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 </project>

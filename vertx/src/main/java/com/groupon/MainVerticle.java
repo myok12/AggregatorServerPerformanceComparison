@@ -58,8 +58,8 @@ public class MainVerticle extends AbstractVerticle {
                 sum.subscribe(
                         integer -> event.response()
                                 .putHeader("content-type", "text/html;charset=utf-8")
-                                .putHeader("Server", "Vertx(xxxxxxxxxxxxxxx)")
-                                .end(exp + "=" + integer),
+                                .putHeader("Server", "Vertx(xxxxxxxxxxxxxx)")
+                                .end(exp + "=" + integer + '\n'),
                         throwable -> event.response().setStatusCode(500).end(throwable.getMessage()));
             } catch (Throwable throwable) {
                 event.response().setStatusCode(500).end(throwable.getMessage());
